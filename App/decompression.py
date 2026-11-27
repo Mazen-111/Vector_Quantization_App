@@ -29,12 +29,14 @@ def unpack_indices(
 
     indices = np.sum(
         binary_data.astype(np.int64) * (1 << shifts),
+        binary_data.astype(np.int64) * (1 << shifts),
         axis=1
     )
 
     return indices.astype(np.int32)
 
 
+def read_compressed_file(filename):
 def read_compressed_file(filename):
 
     with open(filename, "rb") as file:
