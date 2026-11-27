@@ -1,3 +1,35 @@
+def unpack_indices(
+    packed,
+    number_of_indices,
+    bits_per_index
+):
+
+    total_bits = number_of_indices * bits_per_index
+
+    binary_data = np.unpackbits(
+        packed,
+        bitorder="big"
+    )[:total_bits]
+
+    binary_data = binary_data.reshape(
+        number_of_indices,
+        bits_per_index
+    )
+
+    shifts = np.arange(
+        bits_per_index - 1,
+        -1,
+        -1
+    )
+
+    indices = np.sum(
+        binary_data * (1 << shifts),
+        axis=1
+    )
+
+    return indices.astype(np.int32)
+
+
 def load_compressed_file(filename):
 
     with open(filename, "rb") as file:
