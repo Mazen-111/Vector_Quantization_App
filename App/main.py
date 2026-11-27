@@ -55,24 +55,7 @@ loaded_codebook, loaded_indices, metadata = (
     compression.load_compressed_file("compressed_image.vqbin")
 )
 
-reconstructed_vectors = decompression.decode(
-    loaded_indices,
-    loaded_codebook
-)
-
-reconstructed = decompression.reconstruct_image(
-    reconstructed_vectors,
-    metadata["padded_shape"],
-    metadata["block_height"],
-    metadata["block_width"]
-)
-
-original_height, original_width = metadata["original_shape"]
-
-reconstructed = reconstructed[
-    :original_height,
-    :original_width
-]
+# code to return reconstructed array
 
 result = Image.fromarray(
     np.clip(
