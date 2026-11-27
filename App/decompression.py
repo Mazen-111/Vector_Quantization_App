@@ -1,3 +1,10 @@
+import sys
+import struct
+import numpy as np
+
+import compression
+
+
 def unpack_indices(
     packed,
     number_of_indices,
@@ -23,14 +30,14 @@ def unpack_indices(
     )
 
     indices = np.sum(
-        binary_data * (1 << shifts),
+        binary_data.astype(np.int64) * (1 << shifts),
         axis=1
     )
 
     return indices.astype(np.int32)
 
 
-def load_compressed_file(filename):
+def read_compressed_file(filename):
 
     with open(filename, "rb") as file:
 
@@ -104,3 +111,46 @@ def load_compressed_file(filename):
     }
 
     return codebook, indices, metadata
+
+
+def reconstruct_image(codebook, indices, metadata):
+
+    original_height, original_width = metadata["original_shape"]
+    padded_height, padded_width = metadata["padded_shape"]
+    block_height = metadata["block_height"]
+    block_width = metadata["block_width"]
+
+    blocks = codebook[indices]
+
+    blocks = blocks.reshape(
+        padded_height // block_height,
+        padded_width // block_width,
+        block_height,
+        block_width
+    )
+
+    padded_image = blocks.swapaxes(1, 2).reshape(
+        padded_height,
+        padded_width
+    )
+
+    return padded_image[:original_height, :original_width]
+
+
+def load_compressed_file(filename):
+
+    codebook, indices, metadata = read_compressed_file(filename)
+
+    reconstructed = reconstruct_image(
+        codebook,
+        indices,
+        metadata
+    )
+
+    caller_globals = sys._getframe(1).f_globals
+    caller_globals["reconstructed"] = reconstructed
+
+    return codebook, indices, metadata
+
+
+compression.load_compressed_file = load_compressed_file
