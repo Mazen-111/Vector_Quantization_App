@@ -29,7 +29,6 @@ def unpack_indices(
 
     indices = np.sum(
         binary_data.astype(np.int64) * (1 << shifts),
-        binary_data.astype(np.int64) * (1 << shifts),
         axis=1
     )
 
