@@ -37,7 +37,6 @@ def unpack_indices(
 
 
 def read_compressed_file(filename):
-def read_compressed_file(filename):
 
     with open(filename, "rb") as file:
 
