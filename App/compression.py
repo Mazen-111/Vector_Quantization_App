@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 import struct
-
+import os
 
 def load_image(path):
     img = Image.open(path).convert("L")
@@ -9,7 +9,6 @@ def load_image(path):
 
 
 def divide_into_vectors(image, block_height, block_width):
-
     height, width = image.shape
 
     padded_height = (
@@ -109,13 +108,6 @@ def lbg(
     tolerance=0.01,
     max_iterations=100
 ):
-
-    if codebook_size < 1:
-        raise ValueError("Codebook size must be positive.")
-
-    if codebook_size & (codebook_size - 1):
-        raise ValueError("Codebook size must be a power of 2.")
-
     codebook = np.mean(
         vectors,
         axis=0,
@@ -241,3 +233,61 @@ def save_compressed_file(
             packed_indices.tobytes()
         )
         
+
+def calculate_metrics(original_image, block_height, block_width, codebook_size, compressed_filename):
+    original_size = original_image.size
+    num_blocks = (original_image.shape[0] // block_height) * (original_image.shape[1] // block_width)
+    labels_size = num_blocks * (codebook_size - 1).bit_length()
+    total_compressed_size = os.path.getsize(compressed_filename)
+    compression_ratio = total_compressed_size / original_size
+    print("================== Compression Metrics ==================")
+    print(f"Original size = {original_size} bytes")
+    print(f"Number of blocks = {num_blocks}")
+    print(f"Labels size = {labels_size} bits")
+    print(f"Compressed size = {total_compressed_size} bytes")
+    print(f"Compression ratio = {compression_ratio:.2f}")
+    print("=========================================================")
+
+def compress(
+    image_path,
+    block_height,
+    block_width,
+    codebook_size,
+    compressed_filename="compressed.vq",
+    delta=1.0,
+    tolerance=0.01,
+    max_iterations=100
+):
+    image = load_image(image_path)
+
+    original_shape = image.shape
+
+    vectors, padded_shape = divide_into_vectors(
+        image,
+        block_height,
+        block_width
+    )
+
+    codebook = lbg(
+        vectors,
+        codebook_size,
+        delta,
+        tolerance,
+        max_iterations
+    )
+
+    indices = encode(vectors, codebook)
+
+    save_compressed_file(
+        compressed_filename,
+        codebook,
+        indices,
+        original_shape,
+        padded_shape,
+        block_height,
+        block_width
+    )
+    
+    calculate_metrics(image, block_height, block_width, codebook_size, compressed_filename)
+    
+    return compressed_filename
